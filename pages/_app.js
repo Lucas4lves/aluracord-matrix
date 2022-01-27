@@ -28,7 +28,7 @@ function GlobalStyle() {
   }
 
 export default function myApp ({Component, pageProps}) {
-    console.log('Roda em tudo que é buraco');
+  
     return (
       <>
         
