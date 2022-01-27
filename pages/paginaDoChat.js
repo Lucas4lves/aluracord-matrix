@@ -2,12 +2,30 @@ import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React, { useState } from 'react';
 import appConfig from '../config.json';
 
+import { createClient } from '@supabase/supabase-js'
+
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzI5MTM3MCwiZXhwIjoxOTU4ODY3MzcwfQ.sM0ZWicgEOOu7fMVHUJPiRxp56kOItVuJc1rc8Wss6Q";
+const SUPABASE_URL = "https://lfoqyrqhfolzjzbjrttl.supabase.co";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
 
 
 export default function chatPage() {
     const [mensagem, setMensagem] = useState('');
     const [listaMensagens, setLista] = useState([]);
-    
+
+React.useEffect(()=>{
+    supabase
+.from('mensagens')
+        .select('*')
+        .order('id', {ascending: false})
+        .then(({data}) => {
+            setLista(data); 
+        })
+}, []); 
+
+
     // //Usuário
     // //digitar no text area, aperta enter para enviar
     // //mensagem precisa ir para o message list
@@ -20,15 +38,25 @@ export default function chatPage() {
 
     function handleNovaMensagem(novaMensagem) {
         const mensagem = {
-            id: listaMensagens.length + 1,
+            // id: listaMensagens.length + 1,
             de: 'lucas4lves',
             texto: novaMensagem,
         }
-        setLista([
-            mensagem,
-            ...listaMensagens
 
-        ]);
+        supabase
+            .from('mensagens')
+            .insert([
+                mensagem
+            ])
+            .then(({data})=>{
+                
+                 setLista([
+                data[0],
+             ...listaMensagens
+
+         ]);
+            })
+        
         setMensagem('');
     }
 
@@ -143,7 +171,7 @@ function MessageList(props) {
             styleSheet={{
                 overflowY: 'hidden',
                 overflowX: 'hidden',
-                overflow:  'hidden', 
+                overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column-reverse',
                 flex: 1,
