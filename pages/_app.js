@@ -7,9 +7,15 @@ function GlobalStyle() {
           box-sizing: border-box;
           list-style: none;
         }
+
+        ul::-webkit-scrollbar1{
+          display:none;
+        }
+
         body {
           font-family: 'Open Sans', sans-serif;
         }
+
         /* App fit Height */ 
         html, body, #__next {
           min-height: 100vh;

@@ -2,6 +2,8 @@ import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React, { useState } from 'react';
 import appConfig from '../config.json';
 
+import { ButtonSendSticker } from '../src/components/buttonSendSticker'
+import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzI5MTM3MCwiZXhwIjoxOTU4ODY3MzcwfQ.sM0ZWicgEOOu7fMVHUJPiRxp56kOItVuJc1rc8Wss6Q";
@@ -9,37 +11,51 @@ const SUPABASE_URL = "https://lfoqyrqhfolzjzbjrttl.supabase.co";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 
-
+function pegaMensagens(adicionaMensagem) {
+    return supabase
+        .from('mensagens')
+        .on('INSERT', (respostaAuto) => {
+            console.log('Houve uma nova mensagem');
+            adicionaMensagem(respostaAuto.new);
+        })
+        .subscribe();
+}
 
 export default function chatPage() {
+    const roteamento = useRouter();
+    const usuarioLogado = roteamento.query.username;
+
     const [mensagem, setMensagem] = useState('');
-    const [listaMensagens, setLista] = useState([]);
+    const [listaMensagens, setLista] = React.useState([]);
 
-React.useEffect(()=>{
-    supabase
-.from('mensagens')
-        .select('*')
-        .order('id', {ascending: false})
-        .then(({data}) => {
-            setLista(data); 
-        })
-}, []); 
+    React.useEffect(() => {
+        supabase
+            .from('mensagens')
+            .select('*')
+            .order('id', { ascending: false })
+            .then(({ data }) => {
+                //setLista(data);
+            });
 
+         const subscription = pegaMensagens((novaMensagem) => {
+            setLista((valorAtualLista)=>{
+                return [
+                    novaMensagem, 
+                     ...valorAtualLista,
+                 ]
+            });
+         });
+         return () =>{
+             subscription.unsubscribe();
+         }
 
-    // //Usuário
-    // //digitar no text area, aperta enter para enviar
-    // //mensagem precisa ir para o message list
+    }, []);
 
-    // //Dev 
-    // //campo text area (ok)
-    // //apertar o enter e enviar -> onChange (if para limpar caso seja enter o ultimo caractere)
-    // //lista de mensagens 
-    // //
 
     function handleNovaMensagem(novaMensagem) {
         const mensagem = {
-            // id: listaMensagens.length + 1,
-            de: 'lucas4lves',
+            
+            de: usuarioLogado,
             texto: novaMensagem,
         }
 
@@ -48,22 +64,17 @@ React.useEffect(()=>{
             .insert([
                 mensagem
             ])
-            .then(({data})=>{
-                
-                 setLista([
-                data[0],
-             ...listaMensagens
+            .then(({ data }) => {
+               
+            });
 
-         ]);
-            })
-        
         setMensagem('');
     }
 
     return (
         <Box
             styleSheet={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'flex', alignItems: 'left', justifyContent: 'center',
                 backgroundColor: appConfig.theme.colors.primary[500],
                 backgroundImage: `url(https://virtualbackgrounds.site/wp-content/uploads/2020/08/the-matrix-digital-rain.jpg)`,
                 backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundBlendMode: 'multiply',
@@ -138,6 +149,13 @@ React.useEffect(()=>{
                                 color: appConfig.theme.colors.neutrals[200],
                             }}
                         />
+
+                        <ButtonSendSticker
+                            onStickerClick={(sticker) => {
+                                console.log('[USANDO O COMPONENTE]salva o sticker');
+                                handleNovaMensagem(':sticker: ' + sticker);
+                            }}
+                        />
                     </Box>
                 </Box>
             </Box>
@@ -164,14 +182,14 @@ function Header() {
 }
 
 function MessageList(props) {
-    //console.log(props.listaMensagens);
+
     return (
         <Box
             tag="ul"
             styleSheet={{
-                overflowY: 'hidden',
-                overflowX: 'hidden',
                 overflow: 'hidden',
+                overflowY: 'scroll',
+                WebkitScrollbar: 'display:none',
                 display: 'flex',
                 flexDirection: 'column-reverse',
                 flex: 1,
@@ -180,7 +198,7 @@ function MessageList(props) {
             }}
         >
             {props.mensagens.map((mensagem) => {
-                const username = 'lucas4lves';
+
                 return (
                     <Text
                         key={mensagem.id}
@@ -207,7 +225,7 @@ function MessageList(props) {
                                     display: 'inline-block',
                                     marginRight: '8px',
                                 }}
-                                src={`https://github.com/${username}.png`}
+                                src={`https://github.com/${mensagem.de}.png`}
                             />
                             <Text tag="strong">
                                 {mensagem.de}
@@ -223,7 +241,14 @@ function MessageList(props) {
                                 {(new Date().toLocaleDateString())}
                             </Text>
                         </Box>
-                        {mensagem.texto}
+                        {mensagem.texto.startsWith(':sticker:')
+                            ? (
+                                <Image src={mensagem.texto.replace(':sticker:', '')} />
+                            )
+                            : (
+                                mensagem.texto
+                            )}
+
                     </Text>
                 )
             })}

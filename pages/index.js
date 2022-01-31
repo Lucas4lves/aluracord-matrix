@@ -30,7 +30,7 @@ function Titulo(props) {
 
 export default function PaginaInicial() {
   //const username = 'lucas4lves';
-  const [username, setUsername] = React.useState('lucas4lves');
+  const [username, setUsername] = React.useState(`lucas4lves`);
   // console.log('stateDoReact', stateDoReact);
   const roteamento =useRouter();
   return (
@@ -65,8 +65,8 @@ export default function PaginaInicial() {
             onSubmit={function(infosDoEvento) {
                 infosDoEvento.preventDefault();
                 //window.location.href ='/paginaDoChat'
-                roteamento.push('/paginaDoChat')
-                console.log('alguem meteu essa')
+                roteamento.push(`/paginaDoChat?username=${username}`);
+                // console.log('alguem meteu essa')
             }}
             styleSheet={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -98,6 +98,7 @@ export default function PaginaInicial() {
                 //trocar o valor da variavel
                 //através do React e avise quem precisa
                 setUsername(valor);
+                //console.log(`${username}`); 
             }}
               fullWidth
               textFieldColors={{
